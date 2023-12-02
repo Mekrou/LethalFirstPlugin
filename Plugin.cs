@@ -15,10 +15,14 @@ namespace LethalFirstPlugin
         private const string modVersion = "1.0.0.0";
 
         public static ManualLogSource mls;
+        public static Harmony harmony0;
+
+        private const bool allowDestroy = false;
 
         private void Awake()
         {
             mls = this.Logger;
+            harmony0 = new Harmony(modGUID);
 
             // Plugin startup logic
             //var myLoadedAssetBundle = AssetBundle.LoadFromFile(Path.Combine(Assembly.GetExecutingAssembly().Location, "myassetbundle"));
@@ -33,8 +37,7 @@ namespace LethalFirstPlugin
                 
             }
 
-            var harmony = new Harmony(modGUID);
-            harmony.PatchAll(typeof(Plugin));
+            harmony0.PatchAll(typeof(Plugin));
 
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
@@ -44,6 +47,27 @@ namespace LethalFirstPlugin
         static void Commands(HUDManager __instance)
         {
             mls.LogInfo("Submit Chat Performed");
+
+            string text = __instance.chatTextField.text;
+
+            foreach (var kvp in CommandService.Commands)
+            {
+                if (text == kvp.Key)
+                {
+                    kvp.Value.Run();
+                }
+            }
+
+            mls.LogInfo($"User typed: {text}");
+        }
+
+        private void OnDestroy()
+        {
+            if (allowDestroy)
+            {
+                mls.LogInfo($"Unpatching {PluginInfo.PLUGIN_NAME} right now");
+                harmony0.UnpatchSelf();
+            }
         }
     }
 }
